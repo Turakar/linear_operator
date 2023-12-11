@@ -83,7 +83,7 @@ class RectangularLinearOperatorTestCase(BaseTestCase):
         linear_op = self.create_linear_op()
         evaluated = self.evaluate_linear_op(linear_op)
 
-        rhs = torch.randn(linear_op.shape)
+        rhs = torch.randn(linear_op.shape, dtype=linear_op.dtype, device=linear_op.device)
         # Test operator functionality
         a = (linear_op + rhs).to_dense()
         b = evaluated + rhs
@@ -94,10 +94,10 @@ class RectangularLinearOperatorTestCase(BaseTestCase):
         self.assertAllClose(torch.add(linear_op, rhs).to_dense(), evaluated + rhs)
         self.assertAllClose(torch.add(rhs, linear_op).to_dense(), evaluated + rhs)
 
-        rhs = torch.randn(linear_op.matrix_shape)
+        rhs = torch.randn(linear_op.matrix_shape, dtype=linear_op.dtype, device=linear_op.device)
         self.assertAllClose((linear_op + rhs).to_dense(), evaluated + rhs)
 
-        rhs = torch.randn(2, *linear_op.shape)
+        rhs = torch.randn(2, *linear_op.shape, dtype=linear_op.dtype, device=linear_op.device)
         self.assertAllClose((linear_op + rhs).to_dense(), evaluated + rhs)
 
         self.assertAllClose((linear_op + linear_op).to_dense(), evaluated * 2)
@@ -110,7 +110,7 @@ class RectangularLinearOperatorTestCase(BaseTestCase):
         if linear_op.ndimension() > 2:
             return
 
-        rhs = torch.randn(linear_op.size(-1))
+        rhs = torch.randn(linear_op.size(-1), dtype=linear_op.dtype, device=linear_op.device)
         return self._test_matmul(rhs)
 
     def test_constant_mul(self):
@@ -382,18 +382,20 @@ class RectangularLinearOperatorTestCase(BaseTestCase):
         if linear_op.ndimension() > 2:
             return
 
-        lhs = torch.randn(linear_op.size(-2))
+        lhs = torch.randn(linear_op.size(-2), dtype=linear_op.dtype, device=linear_op.device)
         return self._test_rmatmul(lhs)
 
     def test_matmul_matrix(self):
         linear_op = self.create_linear_op()
-        rhs = torch.randn(*linear_op.batch_shape, linear_op.size(-1), 4)
+        rhs = torch.randn(*linear_op.batch_shape, linear_op.size(-1), 4, dtype=linear_op.dtype, device=linear_op.device)
         return self._test_matmul(rhs)
 
     def test_t_matmul_matrix(self):
         with torch.no_grad():
             linear_op = self.create_linear_op()
-            rhs = torch.randn(*linear_op.batch_shape, linear_op.size(-2), 4)
+            rhs = torch.randn(
+                *linear_op.batch_shape, linear_op.size(-2), 4, dtype=linear_op.dtype, device=linear_op.device
+            )
             linear_op_copy = torch.clone(linear_op)
             evaluated = self.evaluate_linear_op(linear_op_copy)
             rhs_evaluated = to_dense(rhs)
@@ -406,12 +408,12 @@ class RectangularLinearOperatorTestCase(BaseTestCase):
 
     def test_rmatmul_matrix(self):
         linear_op = self.create_linear_op()
-        lhs = torch.randn(*linear_op.batch_shape, 4, linear_op.size(-2))
+        lhs = torch.randn(*linear_op.batch_shape, 4, linear_op.size(-2), dtype=linear_op.dtype, device=linear_op.device)
         return self._test_rmatmul(lhs)
 
     def test_matmul_diag_matrix(self):
         linear_op = self.create_linear_op()
-        diag = torch.rand(*linear_op.batch_shape, linear_op.size(-1))
+        diag = torch.rand(*linear_op.batch_shape, linear_op.size(-1), dtype=linear_op.dtype, device=linear_op.device)
         rhs = DiagLinearOperator(diag)
         return self._test_matmul(rhs)
 
@@ -420,18 +422,18 @@ class RectangularLinearOperatorTestCase(BaseTestCase):
 
         # Right hand size has one more batch dimension
         batch_shape = torch.Size((3, *linear_op.batch_shape))
-        rhs = torch.randn(*batch_shape, linear_op.size(-1), 4)
+        rhs = torch.randn(*batch_shape, linear_op.size(-1), 4, dtype=linear_op.dtype, device=linear_op.device)
         self._test_matmul(rhs)
 
         if linear_op.ndimension() > 2:
             # Right hand size has one fewer batch dimension
             batch_shape = torch.Size(linear_op.batch_shape[1:])
-            rhs = torch.randn(*batch_shape, linear_op.size(-1), 4)
+            rhs = torch.randn(*batch_shape, linear_op.size(-1), 4, dtype=linear_op.dtype, device=linear_op.device)
             self._test_matmul(rhs)
 
             # Right hand size has a singleton dimension
             batch_shape = torch.Size((*linear_op.batch_shape[:-1], 1))
-            rhs = torch.randn(*batch_shape, linear_op.size(-1), 4)
+            rhs = torch.randn(*batch_shape, linear_op.size(-1), 4, dtype=linear_op.dtype, device=linear_op.device)
             self._test_matmul(rhs)
 
     def test_rmatmul_matrix_broadcast(self):
@@ -439,25 +441,25 @@ class RectangularLinearOperatorTestCase(BaseTestCase):
 
         # Left hand size has one more batch dimension
         batch_shape = torch.Size((3, *linear_op.batch_shape))
-        lhs = torch.randn(*batch_shape, 4, linear_op.size(-2))
+        lhs = torch.randn(*batch_shape, 4, linear_op.size(-2), dtype=linear_op.dtype, device=linear_op.device)
         self._test_rmatmul(lhs)
 
         if linear_op.ndimension() > 2:
             # Left hand size has one fewer batch dimension
             batch_shape = torch.Size(linear_op.batch_shape[1:])
-            lhs = torch.randn(*batch_shape, 4, linear_op.size(-2))
+            lhs = torch.randn(*batch_shape, 4, linear_op.size(-2), dtype=linear_op.dtype, device=linear_op.device)
             self._test_rmatmul(lhs)
 
             # Left hand size has a singleton dimension
             batch_shape = torch.Size((*linear_op.batch_shape[:-1], 1))
-            lhs = torch.randn(*batch_shape, 4, linear_op.size(-2))
+            lhs = torch.randn(*batch_shape, 4, linear_op.size(-2), dtype=linear_op.dtype, device=linear_op.device)
             self._test_rmatmul(lhs)
 
     def test_rsub(self):
         linear_op = self.create_linear_op()
         evaluated = self.evaluate_linear_op(linear_op)
 
-        rhs = torch.randn(linear_op.shape)
+        rhs = torch.randn(linear_op.shape, dtype=linear_op.dtype, device=linear_op.device)
         # Test operator functionality
         self.assertAllClose((rhs - linear_op).to_dense(), rhs - evaluated)
         # Test __torch_function__ functionality
@@ -467,7 +469,7 @@ class RectangularLinearOperatorTestCase(BaseTestCase):
         linear_op = self.create_linear_op()
         evaluated = self.evaluate_linear_op(linear_op)
 
-        rhs = torch.randn(linear_op.shape)
+        rhs = torch.randn(linear_op.shape, dtype=linear_op.dtype, device=linear_op.device)
         # Test operator functionality
         self.assertAllClose((linear_op - rhs).to_dense(), evaluated - rhs)
         # Test __torch_function__ functionality
@@ -546,7 +548,14 @@ class LinearOperatorTestCase(RectangularLinearOperatorTestCase):
             evaluated = self.evaluate_linear_op(linear_op)
             flattened_evaluated = evaluated.view(-1, *linear_op.matrix_shape)
 
-            vecs = torch.randn(*linear_op.batch_shape, linear_op.size(-1), 3, requires_grad=True)
+            vecs = torch.randn(
+                *linear_op.batch_shape,
+                linear_op.size(-1),
+                3,
+                requires_grad=True,
+                dtype=linear_op.dtype,
+                device=linear_op.device,
+            )
             vecs_copy = vecs.clone().detach().requires_grad_(True)
 
             _wrapped_cg = MagicMock(wraps=linear_operator.utils.linear_cg)
@@ -641,14 +650,16 @@ class LinearOperatorTestCase(RectangularLinearOperatorTestCase):
         ).repeat(*linear_op.batch_shape, 1, 1).mul(1.5)
         self.assertAllClose(res, actual)
 
-        other_diag = torch.randn(linear_op.size(-1)).pow(2)
+        other_diag = torch.randn(linear_op.size(-1), dtype=linear_op.dtype, device=linear_op.device).pow(2)
         res = linear_operator.add_diagonal(linear_op, other_diag).to_dense()
         actual = evaluated + torch.diag_embed(other_diag)
         self.assertAllClose(res, actual)
 
         for sizes in product([1, None], repeat=(linear_op.dim() - 2)):
             batch_shape = [linear_op.batch_shape[i] if size is None else size for i, size in enumerate(sizes)]
-            other_diag = torch.randn(*batch_shape, linear_op.size(-1)).pow(2)
+            other_diag = torch.randn(
+                *batch_shape, linear_op.size(-1), dtype=linear_op.dtype, device=linear_op.device
+            ).pow(2)
             res = linear_op.add_diagonal(other_diag).to_dense()
             actual = evaluated.clone().detach()
             for i in range(other_diag.size(-1)):
@@ -666,7 +677,7 @@ class LinearOperatorTestCase(RectangularLinearOperatorTestCase):
         linear_op = self.create_linear_op()
         linear_op = self.create_linear_op()
         evaluated = self.evaluate_linear_op(linear_op)
-        new_rows = torch.randn(*linear_op.shape[:-1], 3)
+        new_rows = torch.randn(*linear_op.shape[:-1], 3, dtype=linear_op.dtype, device=linear_op.device)
 
         summed_lt = evaluated + new_rows.matmul(new_rows.mT)
         new_lt = linear_op.add_low_rank(new_rows)
@@ -675,7 +686,7 @@ class LinearOperatorTestCase(RectangularLinearOperatorTestCase):
         self.assertAllClose(new_lt.to_dense(), summed_lt)
 
         # check that the root approximation is close
-        rhs = torch.randn(linear_op.size(-1))
+        rhs = torch.randn(linear_op.size(-1), dtype=linear_op.dtype, device=linear_op.device)
         summed_rhs = summed_lt.matmul(rhs)
         root_rhs = linear_operator.root_decomposition(new_lt).matmul(rhs)
         self.assertAllClose(root_rhs, summed_rhs, **self.tolerances["root_decomposition"])
@@ -688,8 +699,12 @@ class LinearOperatorTestCase(RectangularLinearOperatorTestCase):
     def test_bilinear_derivative(self):
         linear_op = self.create_linear_op().detach().requires_grad_(True)
         linear_op_clone = torch.clone(linear_op).detach().requires_grad_(True)
-        left_vecs = torch.randn(*linear_op.batch_shape, linear_op.size(-2), 2)
-        right_vecs = torch.randn(*linear_op.batch_shape, linear_op.size(-1), 2)
+        left_vecs = torch.randn(
+            *linear_op.batch_shape, linear_op.size(-2), 2, dtype=linear_op.dtype, device=linear_op.device
+        )
+        right_vecs = torch.randn(
+            *linear_op.batch_shape, linear_op.size(-1), 2, dtype=linear_op.dtype, device=linear_op.device
+        )
 
         deriv_custom = linear_op._bilinear_derivative(left_vecs, right_vecs)
         deriv_auto = linear_operator.operators.LinearOperator._bilinear_derivative(
@@ -707,8 +722,17 @@ class LinearOperatorTestCase(RectangularLinearOperatorTestCase):
         evaluated = self.evaluate_linear_op(linear_op)
 
         for batch_shape in (torch.Size(), torch.Size([2])):
-            new_rows = 1e-4 * torch.randn(*batch_shape, *linear_op.shape[:-2], 1, linear_op.shape[-1])
-            new_point = torch.rand(*batch_shape, *linear_op.shape[:-2], 1, 1)
+            new_rows = 1e-4 * torch.randn(
+                *batch_shape,
+                *linear_op.shape[:-2],
+                1,
+                linear_op.shape[-1],
+                dtype=linear_op.dtype,
+                device=linear_op.device,
+            )
+            new_point = torch.rand(
+                *batch_shape, *linear_op.shape[:-2], 1, 1, dtype=linear_op.dtype, device=linear_op.device
+            )
 
             # we need to expand here to be able to concat (this happens automatically in cat_rows)
             cat_col1 = torch.cat((evaluated.expand(*batch_shape, *evaluated.shape), new_rows), dim=-2)
@@ -725,7 +749,7 @@ class LinearOperatorTestCase(RectangularLinearOperatorTestCase):
             self.assertAllClose(new_lt.to_dense(), concatenated_lt)
 
             # check that the root approximation is close
-            rhs = torch.randn(linear_op.size(-1) + 1)
+            rhs = torch.randn(linear_op.size(-1) + 1, dtype=linear_op.dtype, device=linear_op.device)
             concat_rhs = concatenated_lt.matmul(rhs)
             root_rhs = linear_operator.root_decomposition(new_lt).matmul(rhs)
             self.assertAllClose(root_rhs, concat_rhs, **self.tolerances["root_decomposition"])
@@ -971,7 +995,9 @@ class LinearOperatorTestCase(RectangularLinearOperatorTestCase):
         _wrapped_lanczos = MagicMock(wraps=linear_operator.utils.lanczos.lanczos_tridiag)
         with patch("linear_operator.utils.lanczos.lanczos_tridiag", new=_wrapped_lanczos) as lanczos_mock:
             linear_op = self.create_linear_op()
-            test_mat = torch.randn(*linear_op.batch_shape, linear_op.size(-1), 5)
+            test_mat = torch.randn(
+                *linear_op.batch_shape, linear_op.size(-1), 5, dtype=linear_op.dtype, device=linear_op.device
+            )
             with linear_operator.settings.max_cholesky_size(math.inf if cholesky else 0):
                 root_approx = linear_operator.root_decomposition(linear_op)
                 res = root_approx.matmul(test_mat)
@@ -988,7 +1014,9 @@ class LinearOperatorTestCase(RectangularLinearOperatorTestCase):
         _wrapped_lanczos = MagicMock(wraps=linear_operator.utils.lanczos.lanczos_tridiag)
         with patch("linear_operator.utils.lanczos.lanczos_tridiag", new=_wrapped_lanczos) as lanczos_mock:
             linear_op = self.create_linear_op()
-            test_mat = torch.randn(*linear_op.batch_shape, linear_op.size(-1), 5)
+            test_mat = torch.randn(
+                *linear_op.batch_shape, linear_op.size(-1), 5, dtype=linear_op.dtype, device=linear_op.device
+            )
             with linear_operator.settings.max_cholesky_size(math.inf if symeig else 0):
                 try:
                     evals, evecs = linear_op.diagonalization()
@@ -1041,7 +1069,9 @@ class LinearOperatorTestCase(RectangularLinearOperatorTestCase):
         linear_op = self.create_linear_op()
         root_approx = linear_operator.root_inv_decomposition(linear_op)
 
-        test_mat = torch.randn(*linear_op.batch_shape, linear_op.size(-1), 5)
+        test_mat = torch.randn(
+            *linear_op.batch_shape, linear_op.size(-1), 5, dtype=linear_op.dtype, device=linear_op.device
+        )
 
         res = root_approx.matmul(test_mat)
         actual = torch.linalg.solve(linear_op, test_mat)
@@ -1058,7 +1088,7 @@ class LinearOperatorTestCase(RectangularLinearOperatorTestCase):
 
     def test_solve_vector(self, cholesky=False):
         linear_op = self.create_linear_op()
-        rhs = torch.randn(linear_op.size(-1))
+        rhs = torch.randn(linear_op.size(-1), dtype=linear_op.dtype, device=linear_op.device)
 
         # We skip this test if we're dealing with batch LinearOperators
         # They shouldn't multiply by a vec
@@ -1069,8 +1099,8 @@ class LinearOperatorTestCase(RectangularLinearOperatorTestCase):
 
     def test_solve_vector_with_left(self, cholesky=False):
         linear_op = self.create_linear_op()
-        rhs = torch.randn(linear_op.size(-1))
-        lhs = torch.randn(6, linear_op.size(-1))
+        rhs = torch.randn(linear_op.size(-1), dtype=linear_op.dtype, device=linear_op.device)
+        lhs = torch.randn(6, linear_op.size(-1), dtype=linear_op.dtype, device=linear_op.device)
 
         # We skip this test if we're dealing with batch LinearOperators
         # They shouldn't multiply by a vec
@@ -1081,13 +1111,13 @@ class LinearOperatorTestCase(RectangularLinearOperatorTestCase):
 
     def test_solve_vector_with_left_cholesky(self):
         linear_op = self.create_linear_op()
-        rhs = torch.randn(*linear_op.batch_shape, linear_op.size(-1), 5)
-        lhs = torch.randn(*linear_op.batch_shape, 6, linear_op.size(-1))
+        rhs = torch.randn(*linear_op.batch_shape, linear_op.size(-1), 5, dtype=linear_op.dtype, device=linear_op.device)
+        lhs = torch.randn(*linear_op.batch_shape, 6, linear_op.size(-1), dtype=linear_op.dtype, device=linear_op.device)
         return self._test_solve(rhs, lhs=lhs, cholesky=True)
 
     def test_solve_matrix(self, cholesky=False):
         linear_op = self.create_linear_op()
-        rhs = torch.randn(*linear_op.batch_shape, linear_op.size(-1), 5)
+        rhs = torch.randn(*linear_op.batch_shape, linear_op.size(-1), 5, dtype=linear_op.dtype, device=linear_op.device)
         return self._test_solve(rhs, cholesky=cholesky)
 
     def test_solve_matrix_cholesky(self):
@@ -1095,8 +1125,8 @@ class LinearOperatorTestCase(RectangularLinearOperatorTestCase):
 
     def test_solve_matrix_with_left(self):
         linear_op = self.create_linear_op()
-        rhs = torch.randn(*linear_op.batch_shape, linear_op.size(-1), 5)
-        lhs = torch.randn(*linear_op.batch_shape, 3, linear_op.size(-1))
+        rhs = torch.randn(*linear_op.batch_shape, linear_op.size(-1), 5, dtype=linear_op.dtype, device=linear_op.device)
+        lhs = torch.randn(*linear_op.batch_shape, 3, linear_op.size(-1), dtype=linear_op.dtype, device=linear_op.device)
         return self._test_solve(rhs, lhs=lhs)
 
     def test_solve_matrix_broadcast(self):
@@ -1104,23 +1134,23 @@ class LinearOperatorTestCase(RectangularLinearOperatorTestCase):
 
         # Right hand size has one more batch dimension
         batch_shape = torch.Size((3, *linear_op.batch_shape))
-        rhs = torch.randn(*batch_shape, linear_op.size(-1), 5)
+        rhs = torch.randn(*batch_shape, linear_op.size(-1), 5, dtype=linear_op.dtype, device=linear_op.device)
         self._test_solve(rhs)
 
         if linear_op.ndimension() > 2:
             # Right hand size has one fewer batch dimension
             batch_shape = torch.Size(linear_op.batch_shape[1:])
-            rhs = torch.randn(*batch_shape, linear_op.size(-1), 5)
+            rhs = torch.randn(*batch_shape, linear_op.size(-1), 5, dtype=linear_op.dtype, device=linear_op.device)
             self._test_solve(rhs)
 
             # Right hand size has a singleton dimension
             batch_shape = torch.Size((*linear_op.batch_shape[:-1], 1))
-            rhs = torch.randn(*batch_shape, linear_op.size(-1), 5)
+            rhs = torch.randn(*batch_shape, linear_op.size(-1), 5, dtype=linear_op.dtype, device=linear_op.device)
             self._test_solve(rhs)
 
     def test_solve_triangular(self):
         linear_op = self.create_linear_op()
-        rhs = torch.randn(linear_op.size(-1))
+        rhs = torch.randn(linear_op.size(-1), dtype=linear_op.dtype, device=linear_op.device)
         with self.assertRaisesRegex(NotImplementedError, "torch.linalg.solve_triangular"):
             torch.linalg.solve_triangular(linear_op, rhs, upper=True)
 
@@ -1134,8 +1164,10 @@ class LinearOperatorTestCase(RectangularLinearOperatorTestCase):
         evaluated.register_hook(self._ensure_symmetric_grad)
 
         # Create a test right hand side and left hand side
-        rhs = torch.randn(*linear_op.shape[:-1], 3).requires_grad_(True)
-        lhs = torch.randn(*linear_op.shape[:-2], 2, linear_op.size(-1)).requires_grad_(True)
+        rhs = torch.randn(*linear_op.shape[:-1], 3, dtype=linear_op.dtype, device=linear_op.device).requires_grad_(True)
+        lhs = torch.randn(
+            *linear_op.shape[:-2], 2, linear_op.size(-1), dtype=linear_op.dtype, device=linear_op.device
+        ).requires_grad_(True)
         rhs_copy = rhs.clone().detach().requires_grad_(True)
         lhs_copy = lhs.clone().detach().requires_grad_(True)
 
@@ -1174,7 +1206,7 @@ class LinearOperatorTestCase(RectangularLinearOperatorTestCase):
         evaluated.register_hook(self._ensure_symmetric_grad)
 
         # Create a test right hand side and left hand side
-        rhs = torch.randn(*linear_op.shape[:-1], 3).requires_grad_(True)
+        rhs = torch.randn(*linear_op.shape[:-1], 3, dtype=linear_op.dtype, device=linear_op.device).requires_grad_(True)
         rhs_copy = rhs.clone().detach().requires_grad_(True)
 
         # Perform forward pass
