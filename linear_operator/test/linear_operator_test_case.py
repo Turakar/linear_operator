@@ -116,16 +116,17 @@ class RectangularLinearOperatorTestCase(BaseTestCase):
     def test_constant_mul(self):
         linear_op = self.create_linear_op()
         evaluated = self.evaluate_linear_op(linear_op)
+        tkwargs = dict(dtype=linear_op.dtype, device=linear_op.device)
 
         # Test operator functionality
         self.assertAllClose((linear_op * 5.0).to_dense(), evaluated * 5.0)
-        self.assertAllClose((linear_op * torch.tensor(5.0)).to_dense(), evaluated * 5.0)
+        self.assertAllClose((linear_op * torch.tensor(5.0, **tkwargs)).to_dense(), evaluated * 5.0)
         self.assertAllClose((5.0 * linear_op).to_dense(), evaluated * 5.0)
-        self.assertAllClose((torch.tensor(5.0) * linear_op).to_dense(), evaluated * 5.0)
+        self.assertAllClose((torch.tensor(5.0, **tkwargs) * linear_op).to_dense(), evaluated * 5.0)
 
         # Test __torch_function__ functionality
-        self.assertAllClose(torch.mul(linear_op, torch.tensor(5.0)).to_dense(), evaluated * 5.0)
-        self.assertAllClose(torch.mul(torch.tensor(5.0), linear_op).to_dense(), evaluated * 5.0)
+        self.assertAllClose(torch.mul(linear_op, torch.tensor(5.0, **tkwargs)).to_dense(), evaluated * 5.0)
+        self.assertAllClose(torch.mul(torch.tensor(5.0, **tkwargs), linear_op).to_dense(), evaluated * 5.0)
 
     def test_constant_mul_neg(self):
         linear_op = self.create_linear_op()
@@ -135,13 +136,14 @@ class RectangularLinearOperatorTestCase(BaseTestCase):
     def test_constant_div(self):
         linear_op = self.create_linear_op()
         evaluated = self.evaluate_linear_op(linear_op)
+        tkwargs = dict(dtype=linear_op.dtype, device=linear_op.device)
 
         # Test operator functionality
         self.assertAllClose((linear_op / 5.0).to_dense(), evaluated / 5.0)
-        self.assertAllClose((linear_op / torch.tensor(5.0)).to_dense(), evaluated / 5.0)
+        self.assertAllClose((linear_op / torch.tensor(5.0, **tkwargs)).to_dense(), evaluated / 5.0)
 
         # Test __torch_function__ functionality
-        self.assertAllClose(torch.div(linear_op, torch.tensor(5.0)).to_dense(), evaluated / 5.0)
+        self.assertAllClose(torch.div(linear_op, torch.tensor(5.0, **tkwargs)).to_dense(), evaluated / 5.0)
 
     def test_to_dense(self):
         linear_op = self.create_linear_op()
