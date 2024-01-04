@@ -35,12 +35,12 @@ class BaseTestCase(ABC):
             if not torch.equal(tensor2, tensor2):
                 raise AssertionError(f"tensor2 ({tensor2.shape}) contains NaNs")
 
-        rtol_diff = (torch.abs(tensor1 - tensor2) / torch.abs(tensor2)).view(-1)
-        rtol_diff = rtol_diff[torch.isfinite(rtol_diff)]
+        rtol_diff = torch.abs(tensor1 - tensor2) / torch.abs(tensor2)
+        rtol_diff = torch.nan_to_num(rtol_diff, nan=0.0, posinf=0.0, neginf=0.0)
         rtol_max = rtol_diff.max().item()
 
-        atol_diff = (torch.abs(tensor1 - tensor2) - torch.abs(tensor2).mul(rtol)).view(-1)
-        atol_diff = atol_diff[torch.isfinite(atol_diff)]
+        atol_diff = torch.abs(tensor1 - tensor2) - torch.abs(tensor2).mul(rtol)
+        atol_diff = torch.nan_to_num(atol_diff, nan=0.0, posinf=0.0, neginf=0.0)
         atol_max = atol_diff.max().item()
 
         raise AssertionError(
