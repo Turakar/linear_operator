@@ -637,7 +637,7 @@ class LinearOperatorTestCase(RectangularLinearOperatorTestCase):
         linear_op = self.create_linear_op()
         evaluated = self.evaluate_linear_op(linear_op)
 
-        other_diag = torch.tensor(1.5)
+        other_diag = torch.tensor(1.5, device=linear_op.device, dtype=linear_op.dtype)
         res = linear_operator.add_diagonal(linear_op, other_diag).to_dense()
 
         actual = evaluated + torch.eye(evaluated.size(-1), device=linear_op.device, dtype=linear_op.dtype).view(
@@ -645,7 +645,7 @@ class LinearOperatorTestCase(RectangularLinearOperatorTestCase):
         ).repeat(*linear_op.batch_shape, 1, 1).mul(1.5)
         self.assertAllClose(res, actual)
 
-        other_diag = torch.tensor([1.5])
+        other_diag = torch.tensor([1.5], device=linear_op.device, dtype=linear_op.dtype)
         res = linear_operator.add_diagonal(linear_op, other_diag).to_dense()
         actual = evaluated + torch.eye(evaluated.size(-1), device=linear_op.device, dtype=linear_op.dtype).view(
             *[1 for _ in range(linear_op.dim() - 2)], evaluated.size(-1), evaluated.size(-1)
