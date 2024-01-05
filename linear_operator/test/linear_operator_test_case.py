@@ -640,14 +640,14 @@ class LinearOperatorTestCase(RectangularLinearOperatorTestCase):
         other_diag = torch.tensor(1.5)
         res = linear_operator.add_diagonal(linear_op, other_diag).to_dense()
 
-        actual = evaluated + torch.eye(evaluated.size(-1)).view(
+        actual = evaluated + torch.eye(evaluated.size(-1), device=linear_op.device, dtype=linear_op.dtype).view(
             *[1 for _ in range(linear_op.dim() - 2)], evaluated.size(-1), evaluated.size(-1)
         ).repeat(*linear_op.batch_shape, 1, 1).mul(1.5)
         self.assertAllClose(res, actual)
 
         other_diag = torch.tensor([1.5])
         res = linear_operator.add_diagonal(linear_op, other_diag).to_dense()
-        actual = evaluated + torch.eye(evaluated.size(-1)).view(
+        actual = evaluated + torch.eye(evaluated.size(-1), device=linear_op.device, dtype=linear_op.dtype).view(
             *[1 for _ in range(linear_op.dim() - 2)], evaluated.size(-1), evaluated.size(-1)
         ).repeat(*linear_op.batch_shape, 1, 1).mul(1.5)
         self.assertAllClose(res, actual)
@@ -672,7 +672,7 @@ class LinearOperatorTestCase(RectangularLinearOperatorTestCase):
         linear_op = self.create_linear_op()
         evaluated = self.evaluate_linear_op(linear_op)
         res = linear_operator.add_jitter(linear_op, 0.4).to_dense()
-        actual = evaluated + torch.eye(evaluated.size(-1)).mul_(0.4)
+        actual = evaluated + torch.eye(evaluated.size(-1), device=linear_op.device, dtype=linear_op.dtype).mul_(0.4)
         self.assertAllClose(res, actual)
 
     def test_add_low_rank(self):
@@ -960,7 +960,7 @@ class LinearOperatorTestCase(RectangularLinearOperatorTestCase):
 
         # Add a diagonal
         linear_op_added_diag = linear_op.add_jitter(0.5)
-        evaluated = evaluated + torch.eye(evaluated.size(-1)).mul(0.5)
+        evaluated = evaluated + torch.eye(evaluated.size(-1), dtype=linear_op.dtype, device=linear_op.device).mul(0.5)
 
         # Here, we just want to check that __torch_function__ works correctly
         # So we'll just use cholesky
