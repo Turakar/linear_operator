@@ -13,6 +13,7 @@ import linear_operator
 from linear_operator.operators import DenseLinearOperator, DiagLinearOperator, to_dense
 from linear_operator.settings import linalg_dtypes
 from linear_operator.test.base_test_case import BaseTestCase
+from linear_operator.utils.cholesky import psd_safe_cholesky
 from linear_operator.utils.errors import CachingError
 from linear_operator.utils.memoize import get_from_cache
 from linear_operator.utils.warnings import PerformanceWarning
@@ -775,7 +776,7 @@ class LinearOperatorTestCase(RectangularLinearOperatorTestCase):
         evaluated = self.evaluate_linear_op(linear_op)
         for upper in (False, True):
             res = torch.linalg.cholesky(linear_op, upper=upper).to_dense()
-            actual = torch.linalg.cholesky(evaluated, upper=upper)
+            actual = psd_safe_cholesky(evaluated, upper=upper)
             self.assertAllClose(res, actual, **self.tolerances["cholesky"])
             # TODO: Check gradients
 
